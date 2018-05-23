@@ -34,9 +34,9 @@ gem install ./pdf4me-1.0.0.gem
 
 ## Install from Git
 
-You can also install from a git repository: https://github.com/GIT_USER_ID/GIT_REPO_ID.git, then add the following in the Gemfile:
+You can also install from a git repository: https://github.com/pdf4me/pdf4me-clientapi-ruby.git, then add the following in the Gemfile:
 
-    gem 'pdf4me', :git => 'https://github.com/GIT_USER_ID/GIT_REPO_ID.git'
+    gem 'pdf4me', :git => 'https://github.com/pdf4me/pdf4me-clientapi-ruby.git'
 
 ## Initializing Pdf4me
 Pdf4me works with any Rack application or plain old ruby script. In any regular script the configuration of Pdf4me looks like
