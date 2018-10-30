@@ -117,7 +117,13 @@ module Pdf4me
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] doc_log_level Object to be assigned
     def doc_log_level=(doc_log_level)
-      validator = EnumAttributeValidator.new('String', ["verbose", "info", "warning", "error", "timing"])
+      log_levels = %w|verbose info warning error timing|
+
+      if doc_log_level.to_s.match(/\d+/)
+        doc_log_level = log_levels[doc_log_level.to_i]
+      end
+
+      validator = EnumAttributeValidator.new('String', log_levels)
       unless validator.valid?(doc_log_level)
         fail ArgumentError, "invalid value for 'doc_log_level', must be one of #{validator.allowable_values}."
       end
