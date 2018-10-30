@@ -396,7 +396,7 @@ For complete list of options, please refer the `OptimizeAction` class
     end
 
     File.open(save_path_2, 'wb') do |f|
-      f.write(Base64.decode64(response.documents[0].doc_data))
+      f.write(Base64.decode64(response.documents[1].doc_data))
    end
 ```
 
@@ -420,7 +420,7 @@ For complete list of options, please refer the `OptimizeAction` class
      end
 
      File.open(save_path_2, 'wb') do |f|
-       f.write(Base64.decode64(response.documents[0].doc_data))
+       f.write(Base64.decode64(response.documents[1].doc_data))
      end
 ```
 
@@ -430,7 +430,10 @@ For complete list of options, please refer the `OptimizeAction` class
 >  - Stamp PDF with image
 >  - Stamp PDF with Text
 > Depending upon the type of stamp, position, size can be configured.
-
+> - alignX _String_ `left`, `center`, `right`
+> - alignY _String_ `top`, `middle`, `bottom`
+> - rotate _Float_
+> - opacity _Float_ between 0.0 to 1.0
 ```ruby
     api_instance = Pdf4me::StampApi.new
 
@@ -443,8 +446,8 @@ For complete list of options, please refer the `OptimizeAction` class
           image: Pdf4me::Image.new(
             imageData: Base64.encode64(File.open(image, 'rb', &:read)),
           ),
-          sizeX: stamp_width,
-          sizeY: stamp_length,
+          sizeX: stamp_width, # in pixels
+          sizeY: stamp_length, # in pixels
           rotate: rotate,
           alignX: align_x,
           alignY: align_y,
