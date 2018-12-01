@@ -467,6 +467,7 @@ For complete list of options, please refer the `OptimizeAction` class
     end
 ```
 
+
 ### text_stamp
 > Utility function over stamp, where you can stamp a document with text
 
