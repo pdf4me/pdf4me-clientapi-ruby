@@ -4,39 +4,23 @@
 The tool provides utility over common PDF related task like `merge`, `create`, `stamp` and others, which can be
 found below.
 
-## Getting Started
+## Installation
 
 Add this line to your application's Gemfile:
 
-```shell
- gem 'pdf4me'
+```ruby
+gem 'pdf4me'
 ```
 
-And then execute
-```shell
-bundle install
-# OR If you don't use bundler
-gem install pdf4me
-```
+And then execute:
 
-## Build locally/for development
-To build the Ruby code into a gem:
+    $ bundle
 
-```shell
-gem build pdf4me.gemspec
-```
+Or install it yourself as:
 
-Then either install the gem locally:
+    $ gem install pdf4me
 
-```shell
-gem install ./pdf4me-1.0.0.gem
-```
-
-## Install from Git
-
-You can also install from a git repository: https://github.com/pdf4me/pdf4me-clientapi-ruby.git, then add the following in the Gemfile:
-
-    gem 'pdf4me', :git => 'https://github.com/pdf4me/pdf4me-clientapi-ruby.git'
+## Usage
 
 ## Initializing Pdf4me
 Pdf4me works with any Rack application or plain old ruby script. In any regular script the configuration of Pdf4me looks like
@@ -50,378 +34,371 @@ Pdf4me works with any Rack application or plain old ruby script. In any regular 
     require 'pdf4me'
 
     Pdf4me.configure do |config|
-        config.host = 'api-dev.pdf4me.com'
-        config.debugging = true
-        config.app_id = 'your-app-id'
-        config.app_secret = 'your-app-secret'
+      config.host = 'api-dev.pdf4me.com'
+      config.token = 'valid-token'
     end
 ```
-
 ## Basic Usage
+> All basic methods exposes a safe and a dangerous method to execute the operation.
+> If the run fails, you can get the error through `.errors`
 
 ### convert_file_to_pdf
-> Given a file, convert the file to PDF
+> Given a file, convert the file to PDF. if `save_path` is not provided, the converted PDF is by defauled saved as file_name provided.
 
 ```ruby
-    api_instance = Pdf4me::ConvertApi.new
-    file = File.open(file_path, 'rb')
-    response = api_instance.convert_file_to_pdf(
-      file_name: 'some-name',
-      file: file
+  b = Pdf4me::ConvertFileToPdf.new(
+        file: '/path/to/file/3.pdf',
+        save_path: 'converted.pdf'
+     )
+  b.run! # dangerous method
+  b.run # safe method - returns true|false
+
+  b.errors # to show errors
+
+```
+
+### extract_pages
+> Extract particular set of pages from given PDF
+
+```ruby
+    a = Pdf4me::ExtractPages.new(
+        file: '/path/to/file/3.pdf',
+        pages: [4],
+        save_path: 'extracted.pdf'
     )
-    file.close
+    a.run
+```
+
+### create_thumbnail
+> Create Thumbnail from existing PDF for a particular page number.
+> This takes in some additional configuration `width` defaulting to 100px, `image_format` defaulting to PNG
+
+```ruby
+    a = Pdf4me::CreateThumbnail.new(
+      file: '/path/to/file/3.pdf',
+      page_number: 4,
+      width: 120,
+      save_path: 'thumbnail.png'
+    )
+    a.run
+```
+
+### merge2_pdfs
+> Merges two PDFs, the order of merge is defined by the arguments passed.
+> * `file1` would always be the first followed by `file2` in merged PDF
+
+```ruby
+    a = Pdf4me::MergeTwoPdfs.new(
+          file1: '/path/to/file/3.pdf',
+          file2: '/path/to/file/4.pdf',
+          save_path: 'merged.pdf'
+    )
+    a.run
+```
+
+###optimize_by_profile
+> Optimizes a PDF based on th the profile argument passed.
+>  * valid values for profile are `default`, `web`, `print`, `max`, `mRC`
+
+```ruby
+    a = Pdf4me::OptimizeByProfile.new(
+          file: '/path/to/file/3.pdf',
+          profile: 'max',
+          save_path: 'optimized.pdf'
+    )
+    a.run
 ```
 
 
-### convert_to_pdf
+### create_pdf_a
+> Creates a PDF/A Compliant document from a given PDF. By default it does not return any response.
+> * valid values for compliances are `unknown`, `pdf10`, `pdf11`, `pdf12`, `pdf13`, `pdf14`, `pdfA1b`, `pdfA1a`, `pdf15`, `pdf16`, `pdf17`, `pdfA2b`, `pdfA2u`, `pdfA2a`, `pdfA3b`, `pdfA3u`, `pdfA3a`
+
+```ruby
+   a = Pdf4me::CreatePdfA.new(
+        file: '/path/to/file/4.pdf',
+        compliance: 'pdfA1a',
+        save_path: 'to_pdfa.pdf'
+   )
+   a.run
+```
+
+### split_by_page_nr
+> Split a given PDF into two with page number as the pivot point.
+
+```ruby
+    a = Pdf4me::SplitByPageNr.new(
+          file: '/path/to/file/3.pdf',
+          page_number: 3,
+          first_pdf: 'first.pdf', # defaults to '/path/to/file/3-first.pdf'
+          second_pdf: 'second.pdf' # defaults to '/path/to/file/3-second.pdf'
+   )
+    a.run
+```
+
+### text_stamp
+> Stamp a PDF with a text on particular sets of pages
+> Stamp takes additional arguments
+> * `position_x` - Position at X-Axis, valid values are `left`, `center`, `right`
+> * `position_y` - Position at Y-Axis, valid values are `top`, `middle`, `bottom`
+> * text - Text to stamp the PDF with and its mandatory.
+
+```ruby
+a = Pdf4me::TextStamp.new(
+      file: '/path/to/file/3.pdf',
+      pages: [1, 3],
+      position_x: 'left',
+      position_y: 'top',
+      text: 'Hell Pdf4me',
+      save_path: 'stamped.pdf'
+)
+a.run
+```
+
+
+## Advanced Usage
+> These methods are more complex than the Basic Wrapper methods. The development of which is still a Work in Progress. Currently there are two methods that you can use.
+>
+> By default all the Advanced methods run in blocking mode -
+> i.e you wait for the server to send you the response.
+>
+> If you want to run the operation asynchronously - you will be notified by a webhook over the result -
+then please set `get_notification` to `true` in `Pdf4me::Notification`.
+>
+> When the `Pdf4me::Notification` object is set, it will overwrite what is the default behaviour
+defined on the application/api level.
+>
+>See Pdf4me-Developer page to configure the webhook on application level.
+
+###convert_to_pdf
+
 > Given a file, convert the file to PDF, with finer controls as opposed to
 `convert_file_to_pdf`. The request is instantiated as a hash with the `:req` key,
 that takes in `Pdf4me::ConvertToPdf` model.
 
-> The model itself is comprised of three more models, `:document`,  `:convertToPdfAction`
- and `:notification`
+> The action takes three different models `:document`,  `:convert_to_pdf_action` and `:notification` and returns
+`Pdf4me::ConvertToPdfRes`
+
+> To get more information regarding the models, please refer the provided [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?java#converttopdfreq)
 
 ```ruby
-    api_instance = Pdf4me::ConvertApi.new
-    opts = {
-      req: Pdf4me::ConvertToPdf.new(
-        document: Pdf4me::Document.new(
-          docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-      ),
-      convertToPdfAction: Pdf4me::ConvertToPdfAction.new(
-        options: ""
-      ),
-      notification: Pdf4me::Notification.new(
-        getNotification: true
-      )
-    )
-  }
-  result = api_instance.convert_to_pdf(opts)
-```
+  file_path = '/path/to/file/TestDocToConvert.docx'
 
-### extract
->  Extract out pages from PDF. You can choose from the pages you want to extract
+  action = Pdf4me::ConvertToPdf.new(
+    document: Pdf4me::Document.new(
+      doc_data: Base64.encode64(File.open(file_path, 'rb', &:read)),
+      name: "TestDocToConvert.docx"
+    ),
+    convert_to_pdf_action: Pdf4me::ConvertToPdfAction.new,
+    notification: Pdf4me::Notification.new(get_notification: true) # async, set false to invoke blocking mode.
+  )
+  response = action.run
 
-```ruby
-    api_instance = Pdf4me::ExtractApi.new
-
-     opts = {
-      req: Pdf4me::Extract.new(
-            document: Pdf4me::Document.new(
-              docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-            ),
-            extractAction: Pdf4me::ExtractAction.new(
-              extractPages: Array.wrap(pages)
-            ),
-            notification: Pdf4me::Notification.new(
-              getNotification: true
-            )
-          )
-     }
-     api_instance.extract(opts)
-```
-
-
-### extract_pages
-> Utility function on top of extract, that trades complexity for configuration.
-
-```ruby
-    api_instance = Pdf4me::ExtractApi.new
-    response = File.open(file_path, 'rb') do |file|
-      api_instance.extract_pages(
-        page_nrs: '2,3,4',
-        file: file
-     )
-    end
-
-    # OR
-    file =  File.open(file_path, 'rb')
-    response = api_instance.extract_pages(
-      page_nrs: '2,3',
-      file: file
-    )
-    file.close
-
-   # do something with response a tempfile
-   FileUtils.cp(response.path, '/new/file/path.pdf')
-```
-
-### create_images
-> Creates images from the PDF Document. This is useful if you want to create thumbnails for the PDF
-> The options are highly configurable to get the desired output.
-> The output would be a base64 encoded object that you have to save.
-
-```ruby
-    # initialize the API client
-    api_instance = Pdf4me::ImageApi.new
-
-    # make request hash
-    opts = {
-        req: Pdf4me::CreateImages.new(
-            document: Pdf4me::Document.new(
-              docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-            ),
-            imageAction: Pdf4me::ImageAction.new(
-              pageSelection: Pdf4me::PageSelection.new(
-                pageNrs: [1,2,3]
-              ),
-              imageExtension: 'png',
-              center: true,
-              fitPage: true,
-              bitsPerPixel: 24,
-              bilevelThreshold: 181,
-              renderOptions: %w(noAntialiasing),
-              rotateMode: 'none',
-              preserveAspectRatio: true,
-              compression: 'raw'
-            ),
-            notification: Pdf4me::Notification.new(
-              getNotification: true
-            )
-        )
-    }
-
-    # response and save
-    response = api_instance.create_images(opts)
-    File.open(save_path, 'wb') do |f|
-       f.write(Base64.decode64(response.document.doc_data))
-    end
-```
-
-### create_thumbnail
-> This is again a wrapper method on top of `:create_images`. The configuration is little less heckling
-
-```ruby
-    api_instance = Pdf4me::ImageApi.new
-    file = File.open(file_path, 'rb')
-
-    response = api_instance.create_thumbnail(
-      100, # width in pixels
-      page_nr: "1", # for which page
-      image_format: "png", # image format
-      file: file
-    )
-
-    file.close
-
-    # do something with response a tempfile
-    FileUtils.cp(response.path, '/new/file/path.png')
-````
-
-### merge
-> Merges two or more PDF and gives MergeRes, a Base64 Encoded file
-
-```ruby
-    # Initialize the API client
-    api_instance = Pdf4me::MergeApi.new
-
-    # make request Hash
-    opts = {
-        req:  Pdf4me::Merge.new(
-            documents: [
-              Pdf4me::Document.new(
-                docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-              ),
-              Pdf4me::Document.new(
-                docData: Base64.encode64(File.open(file_path_2, 'rb', &:read)),
-             ),
-            ],
-            mergeAction: Pdf4me::MergeAction.new,
-            notification: Pdf4me::Notification.new
-        )
-    }
-
-    # make request
-    response = api_instance.merge(opts)
-    File.open(save_path, 'wb') do |f|
-      f.write(Base64.decode64(response.document.doc_data))
-    end
-````
-
-### merge2_pdfs
-> Utility method that merges two pdfs
-
-```ruby
-    api_instance = Pdf4me::MergeApi.new
-
-    file1 = File.open(file_path, 'rb')
-    file2 = File.open(file_path_2, 'rb')
-
-    response = api_instance.merge2_pdfs(
-        file1: file1,
-        file2: file2
-    )
-
-    file1.close
-    file2.close
-
-    # do something with response a tempfile
-    FileUtils.cp(response.path, '/new/file/path.pdf')
+  # saving converted file
+  File.open('path/to/save.pdf', 'wb') do |f|
+    f.write(Base64.decode64(response.document.doc_data))
+  end
 ```
 
 ###optimize
 
-> Given a PDF document, Optimize the document.
-> `:optimize` takes multiple arguments, the arguments are
+> Given a PDF document, Optimize the document and return `Pdf4me::OptimizeRes`
 >
+> `:optimize` takes three different models `document`, `optimize_action` and `notification`
+>
+> `Pdf4me::OptimizeAction` takes multiple arguments, important amongst them being `profile`
 >  * profile, valid values are `default`, `web`, `print`, `max`, `mRC`
->  * dithering_mode, valid values are `none`, `floydSteinberg`, `halftone`, `pattern`, `g3Optimized`, `g4Optimized`, `atkinson`
 
-For complete list of options, please refer the `OptimizeAction` class
+> The finer details on configuration can be found at the [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#optimizereq)
 
 ```ruby
-     # Initialize the API client
-    api_instance = Pdf4me::OptimizeApi.new
+    file_path = '/path/to/file/4.pdf'
 
-    # prepare Request Hash
-    opts = {
-        req: Pdf4me::Optimize.new(
-            document: Pdf4me::Document.new(
-              docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-            ),
-            optimizeAction: Pdf4me::OptimizeAction.new(
-              profile: profile,
-              useProfile: true,
-              optimizeResources: true,
-              ditheringMode: dithering_mode
-            ),
-            notification: Pdf4me::Notification.new(
-              getNotification: true
-            )
+    action = Pdf4me::Optimize.new(
+        document: Pdf4me::Document.new(
+          doc_data: Base64.encode64(File.open(file_path, 'rb', &:read))
+        ),
+        optimize_action: Pdf4me::OptimizeAction.new(
+          use_profile: true,
+          profile: 'max'
         )
-  }
-
-  # make request
-  response = api_instance.optimize(opts)
-  File.open(save_path, 'wb') do |f|
-    f.write(Base64.decode64(response.document.doc_data))
-  end
-
-```
-
-###optimize_by_profile
-> Utility function, that optimizes the PDF based on Profile as mentioned above
-
-```ruby
-    api_instance = Pdf4me::OptimizeApi.new
-    file = File.open(file_path, 'rb')
-
-    response = api_instance.optimize_by_profile(
-      'print',
-      file: file
     )
-    file.close
+    response = action.run
 
-    # do something with response a tempfile
-   FileUtils.cp(response.path, '/new/file/path.pdf')
-```
-
-### pdf_a
-> Creates PDF/A Documents. There are range of options that could be passed while creating the document. The options are
->   - `compliance` _string_ - Anyone of the following values `unknown`, `pdf10`, `pdf11`, `pdf12`, `pdf13`, `pdf14`, `pdfA1b`, `pdfA1a`, `pdf15`, `pdf16`, `pdf17`, `pdfA2b`, `pdfA2u`, `pdfA2a`, `pdfA3b`, `pdfA3u`, `pdfA3a`
->   - `downgrade` _boolean_ `true` or `false`
->   - `upgrade` _boolean_ `true` or `false`
->   - `linearize` _boolean_ `true` or `false`
-
-```ruby
-    api_instance = Pdf4me::PdfAApi.new
-
-    opts = {
-        req: Pdf4me::CreatePdfA.new(
-            document: Pdf4me::Document.new(
-              docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-            ),
-            pdfAAction: Pdf4me::PdfAAction.new(
-              compliance: 'pdfA1a',
-              allowDowngrade: true,
-              allowUpgrade: true,
-              outputIntentProfile: 'sRGBColorSpace',
-              linearize: true
-            ),
-            notification: Pdf4me::Notification.new(
-              getNotification: true
-            )
-        )
-   }
-
-    # make request
-    response = api_instance.pdf_a(opts)
-    File.open('/path/to/save.pdf', 'wb') do |f|
+    # saving optimized file
+    File.open('path/to/optimized.pdf', 'wb') do |f|
       f.write(Base64.decode64(response.document.doc_data))
     end
 ```
 
-### create_pdf_a
-> Utility function based on above function
+### extract
+>  Extract out pages from PDF. You can choose from the pages you want to get.
+
+> `extract` takes three model arguments
+> * `extract_action`
+> * `document`
+> * `notification` - non mandatory
+
+> To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#extractreq)
 
 ```ruby
-    api_instance = Pdf4me::PdfAApi.new
-    file = File.open(file_path, 'rb')
+    file_path = '/path/to/file/4.pdf'
 
-    response = api_instance.create_pdf_a(
-      pdf_compliance: 'pdfA1a',
-      file: file
+    action = Pdf4me::Extract.new(
+        document: Pdf4me::Document.new(
+          doc_data: Base64.encode64(File.open(file_path, 'rb', &:read))
+        ),
+        extract_action: Pdf4me::ExtractAction.new(
+          extract_pages: [1, 2, 5]
+        ),
+        notification: Pdf4me::Notification.new(get_notification: true) # async
     )
+    response = action.run
 
-   file.close
-
-   # do something with response a tempfile
-   FileUtils.cp(response.path, '/new/file/path.pdf')
+    # saving extracted pages
+    File.open('path/to/extracted.pdf', 'wb') do |f|
+      f.write(Base64.decode64(response.document.doc_data))
+    end
 ```
+
+### create_images
+> Creates images from the PDF Document. This is useful if you want to create thumbnails for the PDF.<br>
+> The options are highly configurable to get the desired output.
+> The output would be a base64 encoded object that you have to save.
+> `create_images` takes three different arguments.
+> * `document`
+> * `image_action`
+> * `notification` - non mandatory
+
+> Each model has their own set of attributes and hence can be configured further.
+The full documentation of model attributes are available at [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#createimagesreq)
+
+```ruby
+    file_path = '/path/to/file/4.pdf'
+
+    action = Pdf4me::CreateImages.new(
+        document: Pdf4me::Document.new(
+          doc_data: Base64.encode64(File.open(file_path, 'rb', &:read))
+        ),
+        image_action: Pdf4me::ImageAction.new(
+            page_selection: Pdf4me::PageSelection.new(
+              page_nrs: [1]
+            ),
+            image_extension: 'png',
+            center: true,
+            fit_page: true,
+            bits_per_pixel: 24,
+            bilevel_threshold: 181,
+            render_options: %w(noAntialiasing),
+            rotate_mode: 'none',
+            preserve_aspect_ratio: true,
+            compression: 'raw'
+       )
+    )
+    response = action.run
+
+    # saving the extracted thumbnail
+    File.open('thumbnail.png', 'wb') do |f|
+     f.write(Base64.decode64(response.document.pages.first.thumbnail))
+    end
+```
+
+### merge
+> Merges two or more PDF and gives MergeRes, a Base64 Encoded file
+> `merge` takes three model arguments
+> * `documents` - An Array of `Pdf4me::Document`
+> * `merge_action` - `Pdf4me::MergeAction` model - non mandatory
+> * `notification` - `Pdf4me::Notification` model - non mandatory
+
+> To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#mergereq)
+
+```ruby
+
+    file_path_1 = '/path/to/file/4.pdf'
+    file_path_2 = '/path/to/file/3.pdf'
+    file_path_3 = '/path/to/file/2.pdf'
+
+    action = Pdf4me::Merge.new(
+        documents: [
+          Pdf4me::Document.new(
+            doc_data: Base64.encode64(File.open(file_path_1, 'rb', &:read))
+          ),
+          Pdf4me::Document.new(
+            doc_data: Base64.encode64(File.open(file_path_2, 'rb', &:read))
+          ),
+          Pdf4me::Document.new(
+            doc_data: Base64.encode64(File.open(file_path_3, 'rb', &:read))
+          )
+        ]
+    )
+    response = action.run
+
+    # saving the merged PDF
+    File.open('merged.pdf', 'wb') do |f|
+     f.write(Base64.decode64(response.document.doc_data))
+    end
+```
+
+### pdf_a
+> Creates PDF/A Documents from normal PDF document.
+> `pdf_a` takes three model arguments.
+> * `document` - a valid instance of `Pdf4me::Document`
+> * `pdf_a_action` - a valid instance of `Pdf4me::PdfAAction`
+> * `notification` - a valid instance of `Pdf4me::Notification` - non mandatory
+>
+> To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#createpdfareq)
+```ruby
+    file_path = '/path/to/file/4.pdf'
+
+    action = Pdf4me::PdfA.new(
+      document: Pdf4me::Document.new(
+        doc_data: Base64.encode64(File.open(file_path, 'rb', &:read))
+      ),
+      pdf_a_action: Pdf4me::PdfAAction.new(
+        compliance: 'pdfA1a',
+        allowDowngrade: true,
+        allowUpgrade: true,
+        outputIntentProfile: 'sRGBColorSpace',
+        linearize: true
+      )
+    )
+    response = action.run
+
+    # saving the PDF/A document
+    File.open('pdf_a.pdf', 'wb') do |f|
+     f.write(Base64.decode64(response.document.doc_data))
+    end
+```
+
 
 ### split
-> Given a PDF, split the PDF into two parts
+> Given a PDF, split the PDF into parts
+> `split` takes up three models
+> * `document` - a valid instance of `Pdf4me::Document`
+> * `split_action` - a valid instance of `Pdf4me::SplitAction` which defines the number of parts the PDF splits into
+> * `notification` - non mandatory, an instance of `Pdf4me::Notification`
+>
+> To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#splitreq)
 
 ```ruby
-    api_instance = Pdf4me::SplitApi.new
+  file_path = '/path/to/file/4.pdf'
 
-    opts = {
-      req: Pdf4me::Split.new(
-        document: Pdf4me::Document.new(
-          docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-        ),
-        SplitAction: Pdf4me::SplitAction.new(
-          splitAfterPage: 3
-        ),
-        notificaiton: Pdf4me::Notification.new(
-          getNotification: true
-        )
+   action = Pdf4me::Split.new(
+      document: Pdf4me::Document.new(
+        doc_data: Base64.encode64(File.open(file_path, 'rb', &:read)),
+      ),
+      split_action: Pdf4me::SplitAction.new(
+        split_after_page: 3
       )
-    }
+    )
+  response = action.run
 
-    response = api_instance.split(opts)
-
-    File.open(save_path, 'wb') do |f|
-        f.write(Base64.decode64(response.documents[0].doc_data))
+  # save documents
+  response.documents.each_with_index do |document, index|
+    File.open("split_#{index}.pdf", 'wb') do |f|
+      f.write(Base64.decode64(document.doc_data))
     end
-
-    File.open(save_path_2, 'wb') do |f|
-      f.write(Base64.decode64(response.documents[1].doc_data))
-   end
-```
-
-
-### split_by_page_nr
-> Utility function to split the PDF by page number
-
-```ruby
-     api_instance = Pdf4me::SplitApi.new
-     file = File.open(file_path, 'rb')
-
-     response = api_instance.split_by_page_nr(
-      2, # page_number
-      file: file
-     )
-
-     file.close
-
-     File.open(save_path, 'wb') do |f|
-      f.write(Base64.decode64(response.documents[0].doc_data))
-     end
-
-     File.open(save_path_2, 'wb') do |f|
-       f.write(Base64.decode64(response.documents[1].doc_data))
-     end
+  end
 ```
 
 # stamp
@@ -429,60 +406,40 @@ For complete list of options, please refer the `OptimizeAction` class
 > You can stamp either a text or image to PDF, There are two separate methods defined to help you with stamping
 >  - Stamp PDF with image
 >  - Stamp PDF with Text
-> Depending upon the type of stamp, position, size can be configured.
-> - alignX _String_ `left`, `center`, `right`
-> - alignY _String_ `top`, `middle`, `bottom`
-> - rotate _Float_
-> - opacity _Float_ between 0.0 to 1.0
-```ruby
-    api_instance = Pdf4me::StampApi.new
+> `stamp` takes three model arguments
+* `document` - a valid instance of `Pdf4me::Document`
+> * `stamp_action` - a valid instance of `Pdf4me::StampAction` which defines the stamp type, and position.
+> * `notification` - non mandatory, an instance of `Pdf4me::Notification`
+>
+> To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#stampreq)
 
-    opts = {
-      req: Pdf4me::Stamp.new(
-        document: Pdf4me::Document.new(
-          docData: Base64.encode64(File.open(file_path, 'rb', &:read)),
-        ),
-        stampAction: Pdf4me::StampAction.new(
-          image: Pdf4me::Image.new(
-            imageData: Base64.encode64(File.open(image, 'rb', &:read)),
-          ),
-          sizeX: stamp_width, # in pixels
-          sizeY: stamp_length, # in pixels
-          rotate: rotate,
-          alignX: align_x,
-          alignY: align_y,
-          scale: 'relToA4',
-          stampType: 'foreground',
-          alpha: opacity
-        ),
-        notification: Pdf4me::Notification.new(
-          getNotification: true
+```ruby
+  file_path = '/path/to/file/4.pdf'
+
+   action = Pdf4me::Stamp.new(
+      document: Pdf4me::Document.new(
+        doc_data: Base64.encode64(File.open(file_path, 'rb', &:read)),
+      ),
+      stamp_action: Pdf4me::StampAction.new(
+        image: Pdf4me::Image.new(
+          image_data: Base64.encode64(File.open(image_path, 'rb', &:read))
         )
       )
-    }
-
-    response = api_instance.stamp(opts)
-    File.open(save_path_2, 'wb') do |f|
-      f.write(Base64.decode64(response.document.doc_data))
-    end
-```
-
-### text_stamp
-> Utility function over stamp, where you can stamp a document with text
-
-```ruby
-    api_instance = Pdf4me::StampApi.new
-    file = File.open(file_path, 'rb')
-
-    response = api_instance.text_stamp(
-      'right', # alignment x axis
-      'bottom', # alignment y axis,
-       text: 'Hello world, i am stamp',
-       pages: '1,4',
-       file: file
     )
-    file.close
+  response = action.run
 
-    # do something with response a tempfile
-    FileUtils.cp(response.path, '/new/file/path.pdf')
+  # save stamped document
+  File.open('pdf_stamped.pdf', 'wb') do |f|
+    f.write(Base64.decode64(response.document.doc_data))
+   end
 ```
+
+
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/pdf4me/pdf4me-clientapi-ruby.
+
+## License
+
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
