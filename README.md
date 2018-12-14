@@ -1,4 +1,4 @@
-##Note
+## Note
 This documention is for Gem version 2.x.x, for documentation of Version 1.x.x, please refer the following [README](https://github.com/pdf4me/pdf4me-clientapi-ruby/tree/1-0-stable)
 # pdf4me
 
