@@ -32,7 +32,6 @@ module Pdf4me
     end
 
     def post(path, params)
-      logger.debug(params)
       request = Typhoeus::Request.new(
         request_url(path),
         method: :post,
@@ -41,7 +40,7 @@ module Pdf4me
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'Authorization': "Basic #{config.token}",
-          'User-Agent': "Pdf4meClient/#{VERSION}/ruby"
+          'User-Agent': "Pdf4me/ruby/#{VERSION}"
         },
         timeout: 0,
         ssl_verifypeer: true,
@@ -65,7 +64,7 @@ module Pdf4me
           'Accept': 'application/octet-stream',
           'Content-Type': 'multipart/form-data',
           'Authorization': "Basic #{config.token}",
-          'User-Agent': "Pdf4meClient/#{VERSION}/ruby"
+          'User-Agent': "Pdf4me/ruby/#{VERSION}"
         },
         timeout: 0,
         ssl_verifypeer: true,
