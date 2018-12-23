@@ -16,19 +16,17 @@ module Pdf4me
 
     def valid_objects?
       documents.is_a?(Array) &&
-        merge_action.is_a?(Pdf4me::MergeAction) &&
-        notification.is_a?(Pdf4me::Notification)
+        merge_action.is_a?(Pdf4me::MergeAction)
     end
 
     def valid_instances?
-      notification.valid? && merge_action.valid?
+      merge_action.valid?
     end
 
     def serialize_attributes
       {
         documents: documents.map { |document| document.attributes },
-        merge_action: merge_action.attributes,
-        notification: notification.attributes
+        merge_action: merge_action.attributes
       }
     end
   end
