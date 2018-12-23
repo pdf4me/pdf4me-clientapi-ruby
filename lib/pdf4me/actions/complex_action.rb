@@ -1,6 +1,5 @@
 module Pdf4me
   class ComplexAction
-    attr_accessor :notification
     attr_reader :client
 
     def client
@@ -36,10 +35,6 @@ module Pdf4me
         send(attribute).errors.full_messages
       end
       errors.flatten
-    end
-
-    def notification
-      @notification || Pdf4me::Notification.new
     end
 
     protected

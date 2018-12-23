@@ -68,7 +68,7 @@ require 'pdf4me/models/text'
 require 'pdf4me/models/transform'
 require 'pdf4me/models/translate'
 require 'pdf4me/models/image'
-
+require 'pdf4me/models/rectangle'
 
 
 module Pdf4me

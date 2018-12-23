@@ -159,16 +159,13 @@ a.run
 
 
 ## Advanced Usage
-> These methods are more complex than the Basic Wrapper methods. The development of which is still a Work in Progress. Currently there are two methods that you can use.
+> These methods are more complex than the Basic Wrapper methods.
 >
 > By default all the Advanced methods run in blocking mode -
 > i.e you wait for the server to send you the response.
 >
 > If you want to run the operation asynchronously - you will be notified by a webhook over the result -
-then please set `get_notification` to `true` in `Pdf4me::Notification`.
->
-> When the `Pdf4me::Notification` object is set, it will overwrite what is the default behaviour
-defined on the application/api level.
+then please configure the notification at the dashboard
 >
 >See Pdf4me-Developer page to configure the webhook on application level.
 
@@ -178,7 +175,7 @@ defined on the application/api level.
 `convert_file_to_pdf`. The request is instantiated as a hash with the `:req` key,
 that takes in `Pdf4me::ConvertToPdf` model.
 
-> The action takes three different models `:document`,  `:convert_to_pdf_action` and `:notification` and returns
+> The action takes two different models `:document`,  `:convert_to_pdf_action`  and returns
 `Pdf4me::ConvertToPdfRes`
 
 > To get more information regarding the models, please refer the provided [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?java#converttopdfreq)
@@ -191,8 +188,7 @@ that takes in `Pdf4me::ConvertToPdf` model.
       doc_data: Base64.encode64(File.open(file_path, 'rb', &:read)),
       name: "TestDocToConvert.docx"
     ),
-    convert_to_pdf_action: Pdf4me::ConvertToPdfAction.new,
-    notification: Pdf4me::Notification.new(get_notification: true) # async, set false to invoke blocking mode.
+    convert_to_pdf_action: Pdf4me::ConvertToPdfAction.new
   )
   response = action.run
 
@@ -206,7 +202,7 @@ that takes in `Pdf4me::ConvertToPdf` model.
 
 > Given a PDF document, Optimize the document and return `Pdf4me::OptimizeRes`
 >
-> `:optimize` takes three different models `document`, `optimize_action` and `notification`
+> `:optimize` takes two different models `document` and `optimize_action`
 >
 > `Pdf4me::OptimizeAction` takes multiple arguments, important amongst them being `profile`
 >  * profile, valid values are `default`, `web`, `print`, `max`, `mRC`
@@ -236,10 +232,9 @@ that takes in `Pdf4me::ConvertToPdf` model.
 ### extract
 >  Extract out pages from PDF. You can choose from the pages you want to get.
 
-> `extract` takes three model arguments
+> `extract` takes two model arguments
 > * `extract_action`
 > * `document`
-> * `notification` - non mandatory
 
 > To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#extractreq)
 
@@ -252,8 +247,7 @@ that takes in `Pdf4me::ConvertToPdf` model.
         ),
         extract_action: Pdf4me::ExtractAction.new(
           extract_pages: [1, 2, 5]
-        ),
-        notification: Pdf4me::Notification.new(get_notification: true) # async
+        )
     )
     response = action.run
 
@@ -267,10 +261,9 @@ that takes in `Pdf4me::ConvertToPdf` model.
 > Creates images from the PDF Document. This is useful if you want to create thumbnails for the PDF.<br>
 > The options are highly configurable to get the desired output.
 > The output would be a base64 encoded object that you have to save.
-> `create_images` takes three different arguments.
+> `create_images` takes two different arguments.
 > * `document`
 > * `image_action`
-> * `notification` - non mandatory
 
 > Each model has their own set of attributes and hence can be configured further.
 The full documentation of model attributes are available at [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#createimagesreq)
@@ -307,10 +300,9 @@ The full documentation of model attributes are available at [model definition](h
 
 ### merge
 > Merges two or more PDF and gives MergeRes, a Base64 Encoded file
-> `merge` takes three model arguments
+> `merge` takes two model arguments
 > * `documents` - An Array of `Pdf4me::Document`
 > * `merge_action` - `Pdf4me::MergeAction` model - non mandatory
-> * `notification` - `Pdf4me::Notification` model - non mandatory
 
 > To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#mergereq)
 
@@ -343,10 +335,9 @@ The full documentation of model attributes are available at [model definition](h
 
 ### pdf_a
 > Creates PDF/A Documents from normal PDF document.
-> `pdf_a` takes three model arguments.
+> `pdf_a` takes two model arguments.
 > * `document` - a valid instance of `Pdf4me::Document`
 > * `pdf_a_action` - a valid instance of `Pdf4me::PdfAAction`
-> * `notification` - a valid instance of `Pdf4me::Notification` - non mandatory
 >
 > To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#createpdfareq)
 ```ruby
@@ -375,10 +366,9 @@ The full documentation of model attributes are available at [model definition](h
 
 ### split
 > Given a PDF, split the PDF into parts
-> `split` takes up three models
+> `split` takes up two models
 > * `document` - a valid instance of `Pdf4me::Document`
 > * `split_action` - a valid instance of `Pdf4me::SplitAction` which defines the number of parts the PDF splits into
-> * `notification` - non mandatory, an instance of `Pdf4me::Notification`
 >
 > To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#splitreq)
 
@@ -408,10 +398,9 @@ The full documentation of model attributes are available at [model definition](h
 > You can stamp either a text or image to PDF, There are two separate methods defined to help you with stamping
 >  - Stamp PDF with image
 >  - Stamp PDF with Text
-> `stamp` takes three model arguments
+> `stamp` takes two model arguments
 * `document` - a valid instance of `Pdf4me::Document`
 > * `stamp_action` - a valid instance of `Pdf4me::StampAction` which defines the stamp type, and position.
-> * `notification` - non mandatory, an instance of `Pdf4me::Notification`
 >
 > To list all possible options for the models please refer the  [model definition](https://pdf4medoc.blob.core.windows.net/doc/index.html?curl#stampreq)
 
@@ -424,8 +413,10 @@ The full documentation of model attributes are available at [model definition](h
       ),
       stamp_action: Pdf4me::StampAction.new(
         image: Pdf4me::Image.new(
-          image_data: Base64.encode64(File.open(image_path, 'rb', &:read))
-        )
+          image_data: Base64.encode64(File.open(image_path, 'rb', &:read)),
+          recetangle: Pdf4me::Rectangle.new(width: 200, height: 200)
+        ),
+
       )
     )
   response = action.run
